@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Pot viewer</title>
+  <style>
+    body {
+      font-family: Courier, sans-serif;
+      font-size: 10px;
+    }
+  </style>
+</head>
+<body>
+<h2>Simple viewer for Andrew to see honeypot responses.</h2>
+<button id="toggleGET">Toggle GET Requests</button>
+<table id="hits">
+  <thead>
+  <th>Date/Time from server</th>
+  <th>Date/Time from client</th>
+  <th>Timezone</th>
+  <th>IP from server</th>
+  <th>IP from server (X-IP)</th>
+  <th>IP from client</th>
+  <th>URL</th>
+  <th>Method</th>
+  <th>Referer</th>
+  <th>User Agent</th>
+  <th>IP Country</th>
+  <th>IP City</th>
+  <th>Fingerprint</th>
+  <th>OS</th>
+  <th>Browser</th>
+  </thead>
+  <tbody id="hitsBody">
+  </tbody>
+</table>
+
+<script
+  src="https://code.jquery.com/jquery-3.6.0.min.js"
+  integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4="
+  crossorigin="anonymous"></script>
+<script>
+  $(document).ready(function () {
+    $('#toggleGET').click(function() {
+      $('#hits').find('td:contains(GET)').closest('tr').toggle();
+    })
+
+    $.get('/fetch').done(function (data, textStatus, jqXHR) {
+      window.rawRequestData = data;
+      window.clientDataParsed = [];
+      $hitsBody = $('#hitsBody');
+
+      $.each(data, function (key, val) {
+        client = {
+          ipAddress: '?',
+          ipCountry: '?',
+          ipCity: '?',
+          fingerprintId: '?',
+          localeDateString: '?',
+          os: '?',
+          browser: '?',
+          timezone: '?',
+          fingerprintDebugJSON: '?',
+        }
+        if (val.requestData.length > 0) {
+          try {
+            clientData = JSON.parse(val.requestData)
+            client.fingerprintId = clientData.visitorId
+            client.localeDateString = clientData.localeDateString
+            client.ipAddress = clientData.ipInfo.ipAddress
+            client.ipCountry = clientData.ipInfo.countryName
+            client.ipCity = clientData.ipInfo.city
+            client.fingerprintDebugJSON = JSON.parse(clientData.fingerprintDebugJSON)
+            client.os = client.fingerprintDebugJSON.platform.value
+            client.browser = client.fingerprintDebugJSON.vendor.value + ' / ' + client.fingerprintDebugJSON.vendorFlavors.value.toString()
+            client.timezone = client.fingerprintDebugJSON.timezone.value
+            window.clientDataParsed.push(client)
+          } catch (err) {
+            console.log('Error while parsing request data JSON: ', err)
+          }
+        }
+
+        $hitsBody.append('<tr>' +
+          '<td>' + val.serverTime + '</td>' +
+          '<td>' + client.localeDateString + '</td>' +
+          '<td>' + client.timezone + '</td>' +
+          '<td>' + val.serverIP + '</td>' +
+          '<td>' + val.serverXIP + '</td>' +
+          '<td>' + client.ipAddress + '</td>' +
+          '<td>' + val.requestURL + '</td>' +
+          '<td>' + val.requestMethod + '</td>' +
+          '<td>' + val.requestReferer + '</td>' +
+          '<td>' + val.requestUserAgent + '</td>' +
+          '<td>' + client.ipCountry + '</td>' +
+          '<td>' + client.ipCity + '</td>' +
+          '<td>' + client.fingerprintId.substring(0, 8) + '</td>' +
+          '<td>' + client.os + '</td>' +
+          '<td>' + client.browser + '</td>' +
+          '</tr>');
+      })
+
+      $('#hits').find('td:contains(GET)').closest('tr').hide();
+    })
+  });
+</script>
+</body>
+</html>

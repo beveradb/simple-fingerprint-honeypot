@@ -1,0 +1,5 @@
+{
+  "name": "simple-fingerprint-honeypot-backend",
+  "description": "Simple web honeypot using fingerprintjs to log visitors to express logger backend",
+  "repository": "https://github.com/beveradb/simple-fingerprint-honeypot"
+}
