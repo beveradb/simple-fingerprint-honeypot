@@ -16,6 +16,7 @@ async function startPlayground() {
     const potPayloadObj = {
       fingerprintDebugJSON: FingerprintJS.componentsToDebugString(components),
       visitorId: visitorId,
+      localeDateString: new Date().toLocaleString(),
       ipInfo: '',
       userAgent: navigator.userAgent,
       fingerprintTimeMs: 0,
